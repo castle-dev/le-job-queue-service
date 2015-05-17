@@ -1,0 +1,21 @@
+language: node_js
+before_install:
+  - npm install -g gulp mocha
+  - npm install
+  - npm test
+install:
+  - 'git config --global user.email "travis-ci@entercastle.com"'
+  - 'git config --global user.name "Travis Castle"'
+script:
+  - gulp docs
+  - cd docs
+  - git init
+  - 'git remote add origin "https://${GH_TOKEN}@github.com/castle-dev/le-job-queue-service.git"'
+  - git checkout -B gh-pages
+  - git add .
+  - 'git commit -m "Updating documentation"'
+  - 'git push origin gh-pages -fq > /dev/null'
+env:
+  global:
+    - ENVIRONMENT=staging
+    - secure: PCqu3jEJt2StE1eBH/qLlLq2x8q/1lQdqiEhXTN2RNFMYgvyS3A+8vEfcPU8kO0krvWbt8Egadb84o41/YqmpSq0kkybhcJXlNgqnhwAd9cmBgvVdHIspB12gYGbs0AABBuY0ac6ZS/KPN+90MRqIrBOyurC+7v74FZv8XN/ZJvZZMx+yQ2n0pltL7xsOzlWJTtvjBr8Paw4PUbr831G5+21wLndVC2dDEOQE1uO8O9+gFBSqoZabLbUU7rEPz88EtoVyihp6JS5eZE2jaw3HSWbheudwotUIH3CpcPszLalJlKuxBA0iwJcvhL6O64F+29y7BSd/Z5U1lzM0tgarJ3+jN9YTW2oMpfN5HJnfplKlIJCo0W08VQO0zSeohCTKEAiETQjGI8BEnX9TmV03VFvx4651C8oTD26Cqil6ilwVTcjVYyyoIFNotcgqwX+QtJ2owwqN/lq7AYv6ICp+AzKAgIvEe1D2uItMz4j3buCV1uUrIbqHQNR2dSMdw3pHcdLTOCMrSIIaLZPtLNOzXttBCbdBAfLLJ8YwTZfadSkRfXZuLWWALGMK7WHH9udM5iq9J0QOv16GoLmYBs8BAcwdqvQFv8AJqTDaSVczVwEv07RlMpdXqvekEa8ETuHmiukQI8taEO49xHUXUqO5UTho3KlHk5pDwcn70uC7mA=
