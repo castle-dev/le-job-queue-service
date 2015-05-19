@@ -32,7 +32,7 @@ var JobQueueService = function (storage) {
    * @memberof JobQueueService
    * @instance
    * @param {JobQueueProvider} provider the provider this service delegates to
-   * @param {Function}  processJob function that processes the job. Called with two params `data` and `complete`. processJob must call `complete()` to finish processing a job
+   * @param {Function}  processJob function that processes the job. Called with two params `job` and `complete`. This function must call `complete()` to finish processing a job
    */
   this.createWorker = function (provider, processJob) {
     if (!provider) { throw new Error('Job queue provider required'); }
