@@ -10,7 +10,23 @@ le-job-queue-service
 ## Usage
 
 ```
-  //TODO
+  var storage = /* initialize storage service */
+  var JobQueueService = require('le-email-service');
+  var jobQueue = new JobQueueService(storage);
+
+  // Add a job, likely done client-side
+  jobQueue.addJob('welcome-email', { name: 'Optimus' })
+  .then(function (record) {
+    ...
+  });
+
+  // create a worker, likely done server-side
+  var provider = /* initialize job queue provider (such as le-job-queue-provider-firebase) */
+  function processJob (job, complete) {
+    ...
+    complete();
+  }
+  jobQueue.createWorker(provider, processJob);
 ```
 
 ## Tests
