@@ -1,3 +1,4 @@
+var Firebase = require('firebase');
 var chai = require('chai');
 var sinon = require('sinon');
 var sinonChai = require('sinon-chai');
@@ -15,10 +16,11 @@ describe('e2e tests::', function () {
     var StorageProvider = require('le-storage-provider-firebase');
     var StorageService = require('le-storage-service');
     var firebaseUrl = process.env.FIREBASE_URL;
-    var storage = new StorageService(new StorageProvider(firebaseUrl));
+    var firebaseRef = new Firebase(firebaseUrl);
+    var storage = new StorageService(new StorageProvider(firebaseRef));
     var JobQueueProvider = require('le-job-queue-provider-firebase');
     var JobQueueService = require('../../src/index.js');
-    provider = new JobQueueProvider(firebaseUrl);
+    provider = new JobQueueProvider(firebaseRef);
     service = new JobQueueService(storage);
   });
   it('should respect logic', function () {
