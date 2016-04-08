@@ -27,6 +27,28 @@ var JobQueueService = function (storage) {
     .then(function () { return record; });
   }
   /**
+   * Stores a new job and resolve when the job is complete
+   * @function performJob
+   * @memberof JobQueueService
+   * @instance
+   * @param {string} type the type of the job, used to determine how it should be processed
+   * @param {string} data the data necessary to complete the job
+   * @returns {promise} resolves when the task is complete
+   */
+  this.performJob = function (type, data) {
+    var deferred = q.defer();
+    this.addJob(type, data)
+    .then(function (record) {
+      record.sync(function (recordData) {
+        if (recordData === null) {
+          record.unsync();
+          deferred.resolve();
+        }
+      });
+    });
+    return deferred.promise;
+  }
+  /**
    * Creates a worker to process the jobs in the queue
    * @function createWorker
    * @memberof JobQueueService
