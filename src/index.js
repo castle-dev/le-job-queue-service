@@ -3,10 +3,14 @@ var q = require('q');
  * A tool for creating and processing background jobs
  * @class JobQueueService
  * @param {StorageService} storage an instance of le-storage-service that is used to create records
+ * @param {string} type the type of queue you want to create, supported types are 'default' and 'fast', leaving the field undefined is the same as 'default'
  * @returns {service}
  */
-var JobQueueService = function (storage) {
+var JobQueueService = function (storage, type) {
   if (!storage) { throw new Error('Instance of storage service required'); }
+  if (type !== 'fast' && type !== 'default' && type !== undefined) {
+    throw new Error('Invalid value for the type param, value: ' + type);
+  }
   var _storage = storage;
   /**
    * Stores a new job to process
@@ -18,13 +22,18 @@ var JobQueueService = function (storage) {
    * @returns {promise} resolves with the newly created job record
    */
   this.addJob = function (type, data) {
-    var record = _storage.createRecord('_queue/task')
-    return record
-    .update({
+    var record;
+    if(type === 'fast') {
+      record = _storage.createRecord('_fastQueue/task');
+    } else {
+      record = _storage.createRecord('_queue/task');
+    }
+    return record.update({
       type: type,
       data: data
-    })
-    .then(function () { return record; });
+    }).then(function () {
+      return record;
+    });
   }
   /**
    * Stores a new job and resolve when the job is complete
