@@ -11,6 +11,7 @@ var JobQueueService = function (storage, type) {
   if (type !== 'fast' && type !== 'default' && type !== undefined) {
     throw new Error('Invalid value for the type param, value: ' + type);
   }
+  var queueType = type;
   var _storage = storage;
   /**
    * Stores a new job to process
@@ -23,7 +24,7 @@ var JobQueueService = function (storage, type) {
    */
   this.addJob = function (type, data) {
     var record;
-    if(type === 'fast') {
+    if(queueType === 'fast') {
       record = _storage.createRecord('_fastQueue/task');
     } else {
       record = _storage.createRecord('_queue/task');
