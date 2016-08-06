@@ -3,12 +3,12 @@ var q = require('q');
  * A tool for creating and processing background jobs
  * @class JobQueueService
  * @param {StorageService} storage an instance of le-storage-service that is used to create records
- * @param {string} type the type of queue you want to create, supported types are 'default' and 'fast', leaving the field undefined is the same as 'default'
+ * @param {string} type the type of queue you want to create, supported types are 'default', 'session', and 'fast', leaving the field undefined is the same as 'default'
  * @returns {service}
  */
 var JobQueueService = function (storage, type) {
   if (!storage) { throw new Error('Instance of storage service required'); }
-  if (type !== 'fast' && type !== 'default' && type !== undefined) {
+  if (type !== 'session' && type !== 'fast' && type !== 'default' && type !== undefined) {
     throw new Error('Invalid value for the type param, value: ' + type);
   }
   var queueType = type;
@@ -24,8 +24,10 @@ var JobQueueService = function (storage, type) {
    */
   this.addJob = function (type, data) {
     var record;
-    if(queueType === 'fast') {
+    if (queueType === 'fast') {
       record = _storage.createRecord('_fastQueue/task');
+    } else if (queueType === 'session') {
+      record = _storage.createRecord('_sessionQueue/task');
     } else {
       record = _storage.createRecord('_queue/task');
     }
