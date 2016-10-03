@@ -13,6 +13,7 @@ var JobQueueService = function (storage, type) {
   }
   var queueType = type;
   var _storage = storage;
+  var _provider;
   /**
    * Stores a new job to process
    * @function addJob
@@ -71,7 +72,19 @@ var JobQueueService = function (storage, type) {
   this.createWorker = function (provider, processJob) {
     if (!provider) { throw new Error('Job queue provider required'); }
     if (!processJob) { throw new Error('Process job callback required'); }
-    provider.createWorker(processJob);
+    _provider = provider;
+    _provider.createWorker(processJob);
+  }
+  /**
+   * Prevents the worker from picking up new jobs and resolves once current jobs are complete
+   * @function shutdown
+   * @memberof JobQueueService
+   * @instance
+   * @returns {promise}
+   */
+  this.shutdown = function () {
+    if (!_provider) { throw new Error('Job queue provider required'); }
+    return _provider.shutdown();
   }
 }
 
