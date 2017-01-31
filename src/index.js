@@ -1,4 +1,5 @@
 var q = require('q');
+var leAsymmetricEncryptionService = require('le-asymmetric-encryption');
 /**
  * A tool for creating and processing background jobs
  * @class JobQueueService
@@ -72,8 +73,14 @@ var JobQueueService = function (storage, type) {
   this.createWorker = function (provider, processJob, privateKey) {
     if (!provider) { throw new Error('Job queue provider required'); }
     if (!processJob) { throw new Error('Process job callback required'); }
+    var innerProcessJob = function (job, complete) {
+      var decryptedDataJson = leAsymmetricEncryptionService.decrypt(job.encryptedData, privateKey);
+      var decryptedData = JSON.parse(decryptedData);
+      Object.assign(job.data, decryptedData)
+      processJob(job, complete);
+    }
     _provider = provider;
-    _provider.createWorker(processJob);
+    _provider.createWorker(innerProcessJob);
   }
   /**
    * Prevents the worker from picking up new jobs and resolves once current jobs are complete
