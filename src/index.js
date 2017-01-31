@@ -48,6 +48,10 @@ var JobQueueService = function (storage, type) {
       return record;
     });
   }
+  this.fetchPublicKey() {
+    var publicKeyRecord = _storage.fetchRecord('Public Key', 'BACKGROUND_PUBLIC_KEY');
+    this.publicKey = publicKeyRecord.getData();
+  }
   /**
    * Stores a new job and resolve when the job is complete
    * @function performJob
