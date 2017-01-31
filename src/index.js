@@ -24,7 +24,15 @@ var JobQueueService = function (storage, type) {
    * @param {string} data the data necessary to complete the job
    * @returns {promise} resolves with the newly created job record
    */
-  this.addJob = function (type, data) {
+  this.addJob = function (type, data, sensitiveData) {
+    if (!this.publicKey & sensitiveData) {
+      this.fetchPublicKey();
+    }
+    if (sensitiveData) {
+      sensitiveData = JSON.stringify(sensitiveData);
+      var encryptedData = leAsymmetricEncryptionService.encrypt(sensitiveData, this.publicKey);
+      data.encryptedData = encryptedData;
+    }
     var record;
     if (queueType === 'fast') {
       record = _storage.createRecord('_fastQueue/task');
