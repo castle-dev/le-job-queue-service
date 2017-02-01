@@ -1,5 +1,5 @@
 var q = require('q');
-var leAsymmetricEncryptionService = require('le-asymmetric-encryption');
+var leAsymmetricEncryptionService = require('@castle/le-asymmetric-encryption');
 /**
  * A tool for creating and processing background jobs
  * @class JobQueueService
