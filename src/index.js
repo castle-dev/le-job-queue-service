@@ -28,7 +28,7 @@ var JobQueueService = function (storage, type) {
   this.addJob = function (type, data, sensitiveData) {
     var promiseChain = q.resolve();
     return promiseChain.then(function () {
-      if (!this.publicKey & sensitiveData) {
+      if (!this.publicKey && sensitiveData) {
         return this.fetchPublicKey();
       }
     }).then(function () {
