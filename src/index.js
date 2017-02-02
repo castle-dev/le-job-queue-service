@@ -1,6 +1,6 @@
 var q = require('q');
 var leAsymmetricEncryption = require('@castle/le-asymmetric-encryption');
-var LeAsymmetricEncryptionService = leAsymmetricEncryption.LeAsymmetricEncryptionService;
+var LeAsymmetricEncryptionService = new leAsymmetricEncryption.LeAsymmetricEncryptionService();
 /**
  * A tool for creating and processing background jobs
  * @class JobQueueService
@@ -26,32 +26,37 @@ var JobQueueService = function (storage, type) {
    * @returns {promise} resolves with the newly created job record
    */
   this.addJob = function (type, data, sensitiveData) {
-    if (!this.publicKey & sensitiveData) {
-      this.fetchPublicKey();
-    }
-    if (sensitiveData) {
-      sensitiveData = JSON.stringify(sensitiveData);
-      var encryptedData = LeAsymmetricEncryptionService.encrypt(sensitiveData, this.publicKey);
-      data.encryptedData = encryptedData;
-    }
-    var record;
-    if (queueType === 'fast') {
-      record = _storage.createRecord('_fastQueue/task');
-    } else if (queueType === 'session') {
-      record = _storage.createRecord('_sessionQueue/task');
-    } else {
-      record = _storage.createRecord('_queue/task');
-    }
-    return record.update({
-      type: type,
-      data: data
+    var promiseChain = q.resolve();
+    return promiseChain.then(function () {
+      if (!this.publicKey & sensitiveData) {
+        return this.fetchPublicKey();
+      }
+    }).then(function () {
+      if (sensitiveData) {
+        sensitiveData = JSON.stringify(sensitiveData);
+        var encryptedData = LeAsymmetricEncryptionService.encrypt(sensitiveData, this.publicKey);
+        data.encryptedData = encryptedData;
+      }
+      var record;
+      if (queueType === 'fast') {
+        record = _storage.createRecord('_fastQueue/task');
+      } else if (queueType === 'session') {
+        record = _storage.createRecord('_sessionQueue/task');
+      } else {
+        record = _storage.createRecord('_queue/task');
+      }
+      return record.update({
+        type: type,
+        data: data
+      })
     }).then(function () {
       return record;
     });
   }
   this.fetchPublicKey = function () {
-    var publicKeyRecord = _storage.fetchRecord('Public Key', 'BACKGROUND_PUBLIC_KEY');
-    this.publicKey = publicKeyRecord.getData();
+    return _storage.fetchRecord('Public Key', 'BACKGROUND_PUBLIC_KEY').then(function (publicKeyRecord) {
+      this.publicKey = publicKeyRecord.getData();
+    });
   }
   /**
    * Stores a new job and resolve when the job is complete
