@@ -26,10 +26,11 @@ var JobQueueService = function (storage, type) {
    * @returns {promise} resolves with the newly created job record
    */
   this.addJob = function (type, data, sensitiveData) {
+    var _this = this;
     var promiseChain = q.resolve();
     return promiseChain.then(function () {
       if (!this.publicKey && sensitiveData) {
-        return this.fetchPublicKey();
+        return _this.fetchPublicKey();
       }
     }).then(function () {
       if (sensitiveData) {
