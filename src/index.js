@@ -56,7 +56,8 @@ var JobQueueService = function (storage, type) {
   }
   this.fetchPublicKey = function () {
     return _storage.fetchRecord('Public Key', 'BACKGROUND_PUBLIC_KEY').then(function (publicKeyRecord) {
-      this.publicKey = publicKeyRecord.getData();
+      var publicKeyRecordData = publicKeyRecord.getData();
+      this.publicKey = publicKeyRecordData.value;
     });
   }
   /**
