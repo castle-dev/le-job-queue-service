@@ -50,7 +50,7 @@ var JobQueueService = function (storage, type) {
         type: type,
         data: data
       })
-    }).then(function () {
+    }).then(function (record) {
       return record;
     });
   }
