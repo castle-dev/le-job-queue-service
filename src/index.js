@@ -34,8 +34,8 @@ var JobQueueService = function (storage, type) {
       }
     }).then(function () {
       if (sensitiveData) {
-        sensitiveData = JSON.stringify(sensitiveData);
-        var encryptedData = LeAsymmetricEncryptionService.encrypt(sensitiveData, this.publicKey);
+        var sensitiveDataString = JSON.stringify(sensitiveData);
+        var encryptedData = LeAsymmetricEncryptionService.encrypt(sensitiveDataString, this.publicKey);
         data.encryptedData = encryptedData;
       }
       var record;
@@ -94,9 +94,9 @@ var JobQueueService = function (storage, type) {
     if (!provider) { throw new Error('Job queue provider required'); }
     if (!processJob) { throw new Error('Process job callback required'); }
     var innerProcessJob = function (job, complete) {
-      var decryptedDataJson = LeAsymmetricEncryptionService.decrypt(job.encryptedData, privateKey);
-      var decryptedData = JSON.parse(decryptedData);
-      Object.assign(job.data, decryptedData)
+      var decryptedDataString = LeAsymmetricEncryptionService.decrypt(job.encryptedData, privateKey);
+      var decryptedData = JSON.parse(decryptedDataString);
+      job.data = Object.assign(job.data, decryptedData);
       processJob(job, complete);
     }
     _provider = provider;
