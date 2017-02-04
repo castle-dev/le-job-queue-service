@@ -99,6 +99,7 @@ var JobQueueService = function (storage, type) {
         var decryptedDataString = LeAsymmetricEncryptionService.decrypt(job.encryptedData, privateKey);
         var decryptedData = JSON.parse(decryptedDataString);
         job.data = Object.assign(job.data, decryptedData);
+        delete job.encryptedData;
       }
       processJob(job, complete);
     }
