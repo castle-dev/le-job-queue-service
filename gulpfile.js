@@ -2,7 +2,6 @@
 
 var gulp = require('gulp');
 var util = require('gulp-util');
-var jsdoc = require('gulp-jsdoc');
 var clean = require('gulp-clean');
 var runSequence = require('run-sequence');
 var mocha = require('gulp-mocha');
@@ -13,14 +12,9 @@ var tag = require('gulp-tag-version');
 var rename = require("gulp-rename");
 
 gulp.task('clean', function () {
-  return gulp.src(['docs', 'dist'], { read : false })
+  return gulp.src(['dist'], { read : false })
   .pipe(clean());
 })
-
-gulp.task('docs', function () {
-  return gulp.src(['README.md', 'src/**/*.js'])
-  .pipe(jsdoc('./docs', { path: 'ink-docstrap', theme: 'cyborg' }));
-});
 
 gulp.task('test:unit', function () {
   return gulp.src('test/unit/**/*.js', {read: false})
@@ -59,7 +53,7 @@ gulp.task('bump:minor', function() { return updateVersionNumber('minor'); })
 gulp.task('bump:major', function() { return updateVersionNumber('major'); })
 
 gulp.task('watch', function () {
-  gulp.watch(['src/**/*.js'], ['test:unit', 'docs']);
+  gulp.watch(['src/**/*.js'], ['test:unit']);
   gulp.watch(['test/unit/**/*.js'], ['test:unit']);
   gulp.watch(['test/e2e/**/*.js'], ['test:e2e']);
 })
