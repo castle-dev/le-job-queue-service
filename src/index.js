@@ -1,4 +1,6 @@
 var q = require('q');
+var leAsymmetricEncryption = require('@castle/le-asymmetric-encryption');
+var LeAsymmetricEncryptionService = new leAsymmetricEncryption.LeAsymmetricEncryptionService();
 /**
  * A tool for creating and processing background jobs
  * @class JobQueueService
@@ -23,20 +25,40 @@ var JobQueueService = function (storage, type) {
    * @param {string} data the data necessary to complete the job
    * @returns {promise} resolves with the newly created job record
    */
-  this.addJob = function (type, data) {
-    var record;
-    if (queueType === 'fast') {
-      record = _storage.createRecord('_fastQueue/task');
-    } else if (queueType === 'session') {
-      record = _storage.createRecord('_sessionQueue/task');
-    } else {
-      record = _storage.createRecord('_queue/task');
-    }
-    return record.update({
-      type: type,
-      data: data
+  this.addJob = function (type, data, sensitiveData) {
+    var _this = this;
+    var promiseChain = q.resolve();
+    return promiseChain.then(function () {
+      if (!this.publicKey && sensitiveData) {
+        return _this.fetchPublicKey();
+      }
     }).then(function () {
+      var encryptedData;
+      if (sensitiveData) {
+        var sensitiveDataString = JSON.stringify(sensitiveData);
+        encryptedData = LeAsymmetricEncryptionService.encrypt(sensitiveDataString, this.publicKey);
+      }
+      var record;
+      if (queueType === 'fast') {
+        record = _storage.createRecord('_fastQueue/task');
+      } else if (queueType === 'session') {
+        record = _storage.createRecord('_sessionQueue/task');
+      } else {
+        record = _storage.createRecord('_queue/task');
+      }
+      return record.update({
+        type: type,
+        data: data,
+        encryptedData: encryptedData
+      })
+    }).then(function (record) {
       return record;
+    });
+  }
+  this.fetchPublicKey = function () {
+    return _storage.fetchRecord('Public Key', 'BACKGROUND_PUBLIC_KEY').then(function (publicKeyRecord) {
+      var publicKeyRecordData = publicKeyRecord.getData();
+      this.publicKey = publicKeyRecordData.value;
     });
   }
   /**
@@ -69,11 +91,20 @@ var JobQueueService = function (storage, type) {
    * @param {JobQueueProvider} provider the provider this service delegates to
    * @param {Function}  processJob function that processes the job. Called with two params `job` and `complete`. This function must call `complete()` to finish processing a job
    */
-  this.createWorker = function (provider, processJob) {
+  this.createWorker = function (provider, processJob, privateKey) {
     if (!provider) { throw new Error('Job queue provider required'); }
     if (!processJob) { throw new Error('Process job callback required'); }
+    var innerProcessJob = function (job, complete) {
+      if (job.encryptedData) {
+        var decryptedDataString = LeAsymmetricEncryptionService.decrypt(job.encryptedData, privateKey);
+        var decryptedData = JSON.parse(decryptedDataString);
+        job.data = Object.assign(job.data, decryptedData);
+        delete job.encryptedData;
+      }
+      processJob(job, complete);
+    }
     _provider = provider;
-    _provider.createWorker(processJob);
+    _provider.createWorker(innerProcessJob);
   }
   /**
    * Prevents the worker from picking up new jobs and resolves once current jobs are complete
