@@ -1,4 +1,5 @@
 var q = require('q');
+var chalk = require('chalk');
 var leAsymmetricEncryption = require('@castle/le-asymmetric-encryption');
 var LeAsymmetricEncryptionService = new leAsymmetricEncryption.LeAsymmetricEncryptionService();
 /**
@@ -109,6 +110,8 @@ var JobQueueService = function (storage, type) {
     if (!provider) { throw new Error('Job queue provider required'); }
     if (!processJob) { throw new Error('Process job callback required'); }
     var innerProcessJob = function (job, complete) {
+      console.log(chalk.magenta(new Date().toString() + ' Processing ' + job.type + ' job:'));
+      console.log(chalk.white(JSON.stringify(job.data)), chalk.white(JSON.stringify(job.encryptedData)));
       if (job.encryptedData) {
         try {
           var encryptedPayload = {
