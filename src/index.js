@@ -111,8 +111,9 @@ var JobQueueService = function (storage, type) {
     if (!processJob) { throw new Error('Process job callback required'); }
     var innerProcessJob = function (job, complete) {
       console.log(chalk.magenta(new Date().toString() + ' Processing ' + job.type + ' job:'));
-      console.log(chalk.white(JSON.stringify(job.data)), chalk.white(JSON.stringify(job.encryptedData)));
+      console.log(chalk.white('Job Data: ' + JSON.stringify(job.data)));
       if (job.encryptedData) {
+        console.log(chalk.white('Encrypted Job Data: ' + JSON.stringify(job.encryptedData)));
         try {
           var encryptedPayload = {
             encryptedData: job.encryptedData,
