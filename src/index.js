@@ -16,6 +16,7 @@ var JobQueueService = function (storage, type) {
   var queueType = type;
   var _storage = storage;
   var _provider;
+  var _publicKey;
   /**
    * Stores a new job to process
    * @function addJob
@@ -23,20 +24,24 @@ var JobQueueService = function (storage, type) {
    * @instance
    * @param {string} type the type of the job, used to determine how it should be processed
    * @param {string} data the data necessary to complete the job
+   * @param {string} sensitiveData job data that will be encrypted before storing
    * @returns {promise} resolves with the newly created job record
    */
   this.addJob = function (type, data, sensitiveData) {
     var _this = this;
     var promiseChain = q.resolve();
     return promiseChain.then(function () {
-      if (!this.publicKey && sensitiveData) {
+      if (!_publicKey && sensitiveData) {
         return _this.fetchPublicKey();
       }
     }).then(function () {
-      var encryptedData;
+      var encryptedPayload;
       if (sensitiveData) {
-        var sensitiveDataString = JSON.stringify(sensitiveData);
-        encryptedData = LeAsymmetricEncryptionService.encrypt(sensitiveDataString, this.publicKey);
+        try {
+          encryptedPayload = LeAsymmetricEncryptionService.encrypt(sensitiveData, _publicKey);
+        } catch (err) {
+          console.log(err);
+        }
       }
       var record;
       if (queueType === 'fast') {
@@ -46,11 +51,15 @@ var JobQueueService = function (storage, type) {
       } else {
         record = _storage.createRecord('_queue/task');
       }
-      return record.update({
+      var jobData = {
         type: type,
-        data: data,
-        encryptedData: encryptedData
-      })
+        data: data
+      };
+      if (encryptedPayload) {
+        jobData.encryptedData = encryptedPayload.encryptedData;
+        jobData.encryptedKey = encryptedPayload.encryptedKey;
+      }
+      return record.update(jobData);
     }).then(function (record) {
       return record;
     });
@@ -58,7 +67,7 @@ var JobQueueService = function (storage, type) {
   this.fetchPublicKey = function () {
     return _storage.fetchRecord('Public Key', 'BACKGROUND_PUBLIC_KEY').then(function (publicKeyRecord) {
       var publicKeyRecordData = publicKeyRecord.getData();
-      this.publicKey = publicKeyRecordData.value;
+      _publicKey = publicKeyRecordData.value;
     });
   }
   /**
@@ -68,19 +77,24 @@ var JobQueueService = function (storage, type) {
    * @instance
    * @param {string} type the type of the job, used to determine how it should be processed
    * @param {string} data the data necessary to complete the job
+   * @param {string} sensitiveData job data that will be encrypted before storing
    * @returns {promise} resolves when the task is complete
    */
-  this.performJob = function (type, data) {
+  this.performJob = function (type, data, sensitiveData) {
     var deferred = q.defer();
-    this.addJob(type, data)
-    .then(function (record) {
-      record.sync(function (recordData) {
-        if (recordData === null) {
-          record.unsync();
-          deferred.resolve();
-        }
+    try {
+      this.addJob(type, data, sensitiveData)
+      .then(function (record) {
+        record.sync(function (recordData) {
+          if (recordData === null) {
+            record.unsync();
+            deferred.resolve();
+          }
+        });
       });
-    });
+    } catch (err) {
+      deferred.reject(err);
+    }
     return deferred.promise;
   }
   /**
@@ -96,10 +110,18 @@ var JobQueueService = function (storage, type) {
     if (!processJob) { throw new Error('Process job callback required'); }
     var innerProcessJob = function (job, complete) {
       if (job.encryptedData) {
-        var decryptedDataString = LeAsymmetricEncryptionService.decrypt(job.encryptedData, privateKey);
-        var decryptedData = JSON.parse(decryptedDataString);
-        job.data = Object.assign(job.data, decryptedData);
-        delete job.encryptedData;
+        try {
+          var encryptedPayload = {
+            encryptedData: job.encryptedData,
+            encryptedKey: job.encryptedKey
+          };
+          var decryptedData = LeAsymmetricEncryptionService.decrypt(encryptedPayload, privateKey);
+          job.data = Object.assign(job.data, decryptedData);
+          delete job.encryptedData;
+          delete job.encryptedKey;
+        } catch (err) {
+          console.log(err);
+        }
       }
       processJob(job, complete);
     }
