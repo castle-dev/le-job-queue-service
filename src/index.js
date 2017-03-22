@@ -29,6 +29,8 @@ var JobQueueService = function (storage, type) {
    * @returns {promise} resolves with the newly created job record
    */
   this.addJob = function (type, data, sensitiveData) {
+	removeUndefinedFields(data);
+	removeUndefinedFields(sensitiveData);
     var _this = this;
     var promiseChain = q.resolve();
     return promiseChain.then(function () {
@@ -142,6 +144,31 @@ var JobQueueService = function (storage, type) {
   this.shutdown = function () {
     if (!_provider) { throw new Error('Job queue provider required'); }
     return _provider.shutdown();
+  }
+}
+
+function removeUndefinedFields(data) {
+  if(Array.isArray(data)) {
+    for(var i = 0; i <data.length; i +=1) {
+      var arrayContent = data[i];
+      if(arrayContent === undefined) {
+        data.splice(i);
+        i -=1;
+      }
+    }
+  }
+  if(typeof data !== 'object') {
+    return;
+  }
+  for(var key in data) {
+    if(data.hasOwnProperty(key)) {
+      if(typeof data[key] === 'object') {
+        removeUndefinedFields(data[key]);
+      }
+      if(data[key] === undefined) {
+        delete data[key];
+      }
+    }
   }
 }
 
