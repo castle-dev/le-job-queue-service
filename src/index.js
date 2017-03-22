@@ -29,8 +29,8 @@ var JobQueueService = function (storage, type) {
    * @returns {promise} resolves with the newly created job record
    */
   this.addJob = function (type, data, sensitiveData) {
-	removeUndefinedFields(data);
-	removeUndefinedFields(sensitiveData);
+    removeUndefinedFields(data);
+    removeUndefinedFields(sensitiveData);
     var _this = this;
     var promiseChain = q.resolve();
     return promiseChain.then(function () {
