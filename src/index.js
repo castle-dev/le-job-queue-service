@@ -84,14 +84,15 @@ var JobQueueService = function (storage, type) {
    * @returns {promise} resolves when the task is complete
    */
   this.performJob = function (type, data, sensitiveData) {
+    var clonedData = JSON.parse(JSON.stringify(data));
     var deferred = q.defer();
     try {
-      this.addJob(type, data, sensitiveData)
+      this.addJob(type, clonedData, sensitiveData)
       .then(function (record) {
         record.sync(function (recordData) {
           if (recordData === null) {
             record.unsync();
-            deferred.resolve();
+            deferred.resolve(clonedData._result);
           }
         });
       });
