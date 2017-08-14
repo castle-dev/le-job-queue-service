@@ -107,15 +107,15 @@ var JobQueueService = function (storage, type) {
    * @instance
    * @param {JobQueueProvider} provider the provider this service delegates to
    * @param {Function}  processJob function that processes the job. Called with two params `job` and `complete`. This function must call `complete()` to finish processing a job
+   * @param {string}  privateKey the worker's private key for decrypting incoming job data
+   * @param {Object}  logService determines the correct destination for log messages
    */
-  this.createWorker = function (provider, processJob, privateKey) {
+  this.createWorker = function (provider, processJob, privateKey, logService) {
     if (!provider) { throw new Error('Job queue provider required'); }
     if (!processJob) { throw new Error('Process job callback required'); }
     var innerProcessJob = function (job, complete) {
-      console.log(chalk.magenta(new Date().toString() + ' Processing ' + job.type + ' job:'));
-      console.log(chalk.white('Job Data: ' + JSON.stringify(job.data)));
+      logService.log('Processing ' + job.type + ' job', job.data);
       if (job.encryptedData) {
-        console.log(chalk.white('Encrypted Job Data: ' + JSON.stringify(job.encryptedData)));
         try {
           var encryptedPayload = {
             encryptedData: job.encryptedData,
@@ -126,7 +126,7 @@ var JobQueueService = function (storage, type) {
           delete job.encryptedData;
           delete job.encryptedKey;
         } catch (err) {
-          console.log(err);
+          logService.error(err);
         }
       }
       processJob(job, complete);
