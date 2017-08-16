@@ -107,10 +107,10 @@ var JobQueueService = function (storage, type) {
    * @instance
    * @param {JobQueueProvider} provider the provider this service delegates to
    * @param {Function}  processJob function that processes the job. Called with two params `job` and `complete`. This function must call `complete()` to finish processing a job
-   * @param {string}  privateKey the worker's private key for decrypting incoming job data
+   * @param {string}  keypair the worker's public/private key pair for decrypting incoming job data
    * @param {Object}  logService determines the correct destination for log messages
    */
-  this.createWorker = function (provider, processJob, privateKey, logService) {
+  this.createWorker = function (provider, processJob, keypair, logService) {
     if (!provider) { throw new Error('Job queue provider required'); }
     if (!processJob) { throw new Error('Process job callback required'); }
     var innerProcessJob = function (job, complete) {
@@ -121,7 +121,7 @@ var JobQueueService = function (storage, type) {
             encryptedData: job.encryptedData,
             encryptedKey: job.encryptedKey
           };
-          var decryptedData = LeAsymmetricEncryptionService.decrypt(encryptedPayload, privateKey);
+          var decryptedData = LeAsymmetricEncryptionService.decrypt(encryptedPayload, keypair);
           job.data = Object.assign(job.data, decryptedData);
           delete job.encryptedData;
           delete job.encryptedKey;
