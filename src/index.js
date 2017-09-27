@@ -139,9 +139,8 @@ var JobQueueService = function (storage, type) {
           happenedAt: new Date(),
           eventData: { jobCompletionTime: jobCompletionTime },
         }
-        dataService.create(trackingEvent).then(function(data){
-          complete();
-        });
+        dataService.create(trackingEvent);
+        complete();
       });
     }
     _provider = provider;
