@@ -110,10 +110,11 @@ var JobQueueService = function (storage, type) {
    * @param {string}  keypair the worker's public/private key pair for decrypting incoming job data
    * @param {Object}  logService determines the correct destination for log messages
    */
-  this.createWorker = function (provider, processJob, keypair, logService) {
+  this.createWorker = function (provider, processJob, keypair, logService, dataService) {
     if (!provider) { throw new Error('Job queue provider required'); }
     if (!processJob) { throw new Error('Process job callback required'); }
     var innerProcessJob = function (job, complete) {
+      var jobStartTime = new Date().getTime();
       logService.log('Processing ' + job.type + ' job', job.data);
       if (job.encryptedData) {
         try {
@@ -129,7 +130,18 @@ var JobQueueService = function (storage, type) {
           logService.error(err);
         }
       }
-      processJob(job, complete);
+      processJob(job, function(){
+        var jobCompleteTime = new Date().getTime();
+        var jobCompletionTime = jobCompleteTime - jobStartTime;
+        let trackingEvent = {
+          _type: 'TrackingEvent',
+          eventName: job.type + '-job-complete',
+          happenedAt: new Date(),
+          eventData: { jobCompletionTime: jobCompletionTime },
+        }
+        dataService.create(trackingEvent);
+        complete();
+      });
     }
     _provider = provider;
     _provider.createWorker(innerProcessJob);
