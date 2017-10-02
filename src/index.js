@@ -135,7 +135,7 @@ var JobQueueService = function (storage, type) {
         var jobCompletionTime = jobCompleteTime - jobStartTime;
         let trackingEvent = {
           _type: 'TrackingEvent',
-          eventName: job.type + '-job-complete',
+          eventName: job.type + '-job-completed',
           happenedAt: new Date(),
           eventData: { jobCompletionTime: jobCompletionTime },
         }
