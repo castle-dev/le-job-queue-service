@@ -81,13 +81,17 @@ var JobQueueService = function (storage, type) {
    * @param {string} type the type of the job, used to determine how it should be processed
    * @param {string} data the data necessary to complete the job
    * @param {string} sensitiveData job data that will be encrypted before storing
+   * @param {Function} jobAddedCallback callback that will be called once the job is added to the queue
    * @returns {promise} resolves when the task is complete
    */
-  this.performJob = function (type, data, sensitiveData) {
+  this.performJob = function (type, data, sensitiveData, jobAddedCallback) {
     var deferred = q.defer();
     try {
       this.addJob(type, data, sensitiveData)
       .then(function (record) {
+        if (jobAddedCallback) {
+          jobAddedCallback();
+        }
         record.sync(function (recordData) {
           if (recordData === null) {
             record.unsync();
